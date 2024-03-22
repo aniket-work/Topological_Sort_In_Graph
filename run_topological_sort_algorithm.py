@@ -84,29 +84,64 @@ def run_topological_sort():
         # Create the graph for topological sorting
         session.run(query_project_graph)
 
-        # Execute topological sort algorithm
+        # Execute topological sort algorithm and calculate distance from source
         result = session.run(query_topological_sort)
+
+        # Store the results in a list
+        result_list = list(result)
 
         # Print sorted sequence of courses with maxDistanceFromSource
         print("Topological Sort Order:")
-        sorted_courses = []
-        for record in result:
+        for record in result_list:
             course = record['course']
-            sorted_courses.append(course)
             print(f"Course: {course}, Max Distance from Source: {record['maxDistanceFromSource']}")
 
         # Create a Network object
         network = Network(notebook=False)
-        network.add_nodes(sorted_courses)
 
-        # Add edges
-        for i in range(len(sorted_courses) - 1):
-            network.add_edge(sorted_courses[i], sorted_courses[i + 1])
+        # Add nodes and keep track of added nodes
+        added_nodes = set()
+        for record in result_list:
+            print("in result for loop")
+            course = record['course']
+            if not course:
+                print("Empty course name found in record:", record)
+            else:
+                course_lower = course.lower()  # Convert to lowercase
+                if course not in added_nodes:  # Check if node already added
+                    network.add_node(course_lower)  # Add node to the graph
+                    added_nodes.add(course_lower)  # Update set of added nodes
+                    print("Added node:", course_lower)  # Debug print
+                else:
+                    print("Course already added:", course_lower)
+            print("Current added nodes:", added_nodes)  # Print current set of added nodes
+
+        # Add edges based on relationships in the graph
+        query_get_edges = """
+        MATCH (source)-[:PREREQUISITE]->(target)
+        RETURN source.name AS source, target.name AS target
+        """
+        edges = session.run(query_get_edges)
+        for edge in edges:
+            source = edge['source'].lower()  # Convert to lowercase
+            target = edge['target'].lower()  # Convert to lowercase
+
+            if source in added_nodes and target in added_nodes:  # Check if both nodes exist
+                network.add_edge(source, target)  # Add edge to the graph
+                print(f"Adding edge: {source} -> {target}")  # Debug print
+            else:
+                print(f"Ignoring edge: {source} -> {target}")  # Debug print
+
+        # Print out nodes and edges data for debugging
+        print("Nodes:", network.get_nodes())
+        print("Edges:", network.get_edges())
 
         # Save the graph to an HTML file
         graph_html_file = 'sorted_courses_graph.html'
         network.save_graph(graph_html_file)
         print(f"Sorted courses graph exported to '{graph_html_file}'")
+
+        print(f"Graph exported to '{graph_html_file}'")
 
         # Open the HTML file in a web browser
         webbrowser.open_new_tab(graph_html_file)
