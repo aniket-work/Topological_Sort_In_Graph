@@ -4,3 +4,4 @@ scipy
 pyvis
 jupyter
 neo4j
+terminaltables
