@@ -2,32 +2,17 @@ import networkx as nx
 from neo4j import GraphDatabase
 from pyvis.network import Network
 import webbrowser
+import json
 
 # Neo4j connection parameters
 uri = "bolt://localhost:7687"
 user = "neo4j"
 password = "abcd1234"
 
-
-# Function to create dummy course data using NetworkX
-def create_dummy_course_data():
-    G = nx.DiGraph()
-    courses = {
-        "Calculus": [],
-        "Linear Algebra": ["Calculus"],
-        "Intro to Programming": [],
-        "Data Structures": ["Intro to Programming"],
-        "Algorithms": ["Data Structures"],
-        "Database Systems": ["Data Structures"],
-        "Web Development": ["Database Systems"],
-        "Machine Learning": ["Linear Algebra"],
-        "Advanced Algorithms": ["Algorithms"],
-        "Operating Systems": ["Algorithms"]
-    }
-    for course, prereqs in courses.items():
-        for prereq in prereqs:
-            G.add_edge(prereq, course)
-    return G
+def load_courses_from_json(file_path):
+    with open(file_path, 'r') as file:
+        data = json.load(file)
+        return data.get('courses', {})
 
 
 # Function to convert NetworkX graph to Neo4j
@@ -149,8 +134,17 @@ def run_topological_sort():
 
 # Main function
 def main():
+    # Load courses from JSON file
+    courses = load_courses_from_json('courses.json')
+    if not courses:
+        print("No courses found in the JSON file.")
+        return
+
     # Create dummy course data using NetworkX
-    G = create_dummy_course_data()
+    G = nx.DiGraph()
+    for course, prereqs in courses.items():
+        for prereq in prereqs:
+            G.add_edge(prereq, course)
 
     # Connect to Neo4j and convert course data
     driver = GraphDatabase.driver(uri, auth=(user, password))
