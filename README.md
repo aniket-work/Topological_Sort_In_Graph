@@ -5,6 +5,8 @@ Topological_Sort_In_Graph
 
 To set up the `Topological_Sort_In_Graph` environment, follow these steps:
 
+Note : Make sure Neo4J DB is running locally. 
+
 1. Create a virtual environment using Python's built-in `venv` module:
 
     ```bash
@@ -30,3 +32,9 @@ To set up the `Topological_Sort_In_Graph` environment, follow these steps:
     ```bash
     pip install -r requirements.txt
     ```
+   
+4. Run
+
+   ```bash
+   python run_topological_sort_algorithm.py
+   ```
